@@ -155,10 +155,10 @@ void LscmRelax::relax(double weight)
     Eigen::Matrix<double, 2, 2> T;
     Eigen::Matrix<double, 6, 6> K_m;
     Eigen::Matrix<double, 6, 1> u_m, rhs_m;
-    Eigen::VectorXd rhs(this->vertices.cols() * 2);
+    Eigen::VectorXd rhs(this->vertices.cols() * 2 + 3);
     if (this->sol.size() == 0)
-        this->sol.Zero(this->vertices.cols() * 2);
-    spMat K_g(this->vertices.cols() * 2, this->vertices.cols() * 2);
+        this->sol.Zero(this->vertices.cols() * 2 + 3);
+    spMat K_g(this->vertices.cols() * 2 + 3, this->vertices.cols() * 2 + 3);
     std::vector<trip> K_g_triplets;
     Vector2 v1, v2, v3, v12, v23, v31;
     long row_pos, col_pos;
@@ -219,48 +219,66 @@ void LscmRelax::relax(double weight)
     // fixing some points
     // allthough only internal forces are applied there has to be locked
     // at least 3 degrees of freedom to stop the mesh from pure rotation and pure translation
-    std::vector<long> fixed_dof;
-    fixed_dof.push_back(this->triangles(0, 0) * 2); //x0
-    fixed_dof.push_back(this->triangles(0, 0) * 2 + 1); //y0
-    fixed_dof.push_back(this->triangles(1, 0) * 2 + 1); // y1
+    // std::vector<long> fixed_dof;
+    // fixed_dof.push_back(this->triangles(0, 0) * 2); //x0
+    // fixed_dof.push_back(this->triangles(0, 0) * 2 + 1); //y0
+    // fixed_dof.push_back(this->triangles(1, 0) * 2 + 1); // y1
 
     // align flat mesh to fixed edge
-    Vector2 edge = this->flat_vertices.col(this->triangles(1, 0)) - 
-                   this->flat_vertices.col(this->triangles(0, 0));
-    edge.normalize();
-    Eigen::Matrix<double, 2, 2> rot;
-    rot << edge.x(), edge.y(), -edge.y(), edge.x();
-    this->flat_vertices = rot * this->flat_vertices;
+    // Vector2 edge = this->flat_vertices.col(this->triangles(1, 0)) - 
+    //                this->flat_vertices.col(this->triangles(0, 0));
+    // edge.normalize();
+    // Eigen::Matrix<double, 2, 2> rot;
+    // rot << edge.x(), edge.y(), -edge.y(), edge.x();
+    // this->flat_vertices = rot * this->flat_vertices;
 
-    // return true if triplet row / col is in fixed_dof
-    auto is_in_fixed_dof = [fixed_dof](const trip & element) -> bool {
-        return (
-            (std::find(fixed_dof.begin(), fixed_dof.end(), element.row()) != fixed_dof.end()) or
-            (std::find(fixed_dof.begin(), fixed_dof.end(), element.col()) != fixed_dof.end()));
-    };
-    std::cout << "size of triplets: " << K_g_triplets.size() << std::endl;
-    K_g_triplets.erase(
-        std::remove_if(K_g_triplets.begin(), K_g_triplets.end(), is_in_fixed_dof),
-        K_g_triplets.end());
-    std::cout << "size of triplets: " << K_g_triplets.size() << std::endl;
-    for (long fixed: fixed_dof)
-    {
-        K_g_triplets.push_back(trip(fixed, fixed, 1.));
-        rhs[fixed] = 0;
-    }
+    // // return true if triplet row / col is in fixed_dof
+    // auto is_in_fixed_dof = [fixed_dof](const trip & element) -> bool {
+    //     return (
+    //         (std::find(fixed_dof.begin(), fixed_dof.end(), element.row()) != fixed_dof.end()) or
+    //         (std::find(fixed_dof.begin(), fixed_dof.end(), element.col()) != fixed_dof.end()));
+    // };
+    // std::cout << "size of triplets: " << K_g_triplets.size() << std::endl;
+    // K_g_triplets.erase(
+    //     std::remove_if(K_g_triplets.begin(), K_g_triplets.end(), is_in_fixed_dof),
+    //     K_g_triplets.end());
+    // std::cout << "size of triplets: " << K_g_triplets.size() << std::endl;
+    // for (long fixed: fixed_dof)
+    // {
+    //     K_g_triplets.push_back(trip(fixed, fixed, 1.));
+    //     rhs[fixed] = 0;
+    // }
 
     // for (long i=0; i< this->vertices.cols() * 2; i++)
     //     K_g_triplets.push_back(trip(i, i, 0.01));
+
+    // lagrange multiplier
+    for (long i=0; i < this->flat_vertices.cols() ; i++)
+    {
+        // fixing total ux
+        K_g_triplets.push_back(trip(i * 2, this->flat_vertices.cols() * 2, 1));
+        K_g_triplets.push_back(trip(this->flat_vertices.cols() * 2, i * 2, 1));
+        // fixing total uy
+        K_g_triplets.push_back(trip(i * 2 + 1, this->flat_vertices.cols() * 2 + 1, 1));
+        K_g_triplets.push_back(trip(this->flat_vertices.cols() * 2 + 1, i * 2 + 1, 1));
+        // fixing ux*y-uy*x
+        K_g_triplets.push_back(trip(i * 2, this->flat_vertices.cols() * 2 + 2, - this->flat_vertices(1, i)));
+        K_g_triplets.push_back(trip(this->flat_vertices.cols() * 2 + 2, i * 2, - this->flat_vertices(1, i)));
+        K_g_triplets.push_back(trip(i * 2 + 1, this->flat_vertices.cols() * 2 + 2, this->flat_vertices(0, i)));
+        K_g_triplets.push_back(trip(this->flat_vertices.cols() * 2 + 2, i * 2 + 1, this->flat_vertices(0, i)));
+    }
+
     K_g.setFromTriplets(K_g_triplets.begin(), K_g_triplets.end());
+    // rhs +=  K_g * Eigen::VectorXd::Ones(K_g.rows());
     
     // solve linear system (privately store the value for guess in next step)
     Eigen::ConjugateGradient<spMat, Eigen::Lower> solver;
     solver.setTolerance(0.0000001);
     solver.compute(K_g);
     this->sol = solver.solveWithGuess(-rhs, this->sol);
+    std::cout << rhs << std::endl;
     this->set_shift(this->sol.head(this->vertices.cols() * 2) * weight);
     this->set_q_l_m();
-    this->MATRIX = K_g;
 }
 
 
@@ -336,8 +354,8 @@ void LscmRelax::lscm()
     this->set_position(sol);
     this->set_q_l_m();
     this->transform(true);
-    this->rotate_by_min_bound_area();
-    // 7. if size of fixed pins <= 2: scale the map to the same area as the 3d mesh
+    // this->rotate_by_min_bound_area();
+    this->set_q_l_m();
 
 }
 

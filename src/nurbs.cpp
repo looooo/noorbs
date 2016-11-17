@@ -201,8 +201,10 @@ Eigen::VectorXd NurbsBase::getDuVector(Eigen::Vector2d u)
         {
             C1 = weights[i] * Dn_u[u_i] * n_v[v_i];
             C2 = weights[i] * n_u[u_i] * n_v[v_i];
-            A1[i] = C1; A2[i] = C1;
-            A3 += C2; A5 += C1;
+            A1[i] = C1;
+            A2[i] = C1;
+            A3 += C2;
+            A5 += C1;
             i ++;
         }
     }

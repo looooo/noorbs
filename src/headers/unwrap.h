@@ -19,6 +19,8 @@
 #include <Eigen/Geometry>
 #include <Eigen/IterativeLinearSolvers>
 
+#include "nurbs.h"
+
 typedef Eigen::SparseMatrix<double> spMat;
 
 namespace nurbs{
@@ -79,8 +81,6 @@ public:
     void lscm();
     void relax(double);
 
-    ColMat<double, 1> get_alpha_distortion();
-    ColMat<double, 1> get_internal_work();
     ColMat<double, 3> get_flat_vertices_3D();
 
     void rotate_by_min_bound_area();
@@ -88,6 +88,28 @@ public:
     
     double get_area();
     double get_flat_area();
+
+};
+
+struct NurbsFlat{
+
+    NurbsFlat(
+        RowMat<double, 3> poles,
+        Eigen::VectorXi u_knots,
+        Eigen::VectorXi v_knots,
+        Eigen::VectorXd weights,
+        int degree_u=3, int degree_v=3);
+
+    NurbsBase base;
+    std::vector<long> fixed_poles;
+    RowMat<double, 3> poles;
+    RowMat<double, 2> flat_poles;
+
+    double nue=0.0;
+    double elasticity=1.;
+
+    void lscm();
+    void relax(double);
 
 };
 
