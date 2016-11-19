@@ -29,15 +29,23 @@ void init_nurbs(py::module &m){
         .def_property_readonly("flat_vertices", [](nurbs::LscmRelax& L){return L.flat_vertices.transpose();}, py::return_value_policy::copy)
         .def_property_readonly("flat_vertices_3D", &nurbs::LscmRelax::get_flat_vertices_3D);
 
-    py::class_<nurbs::NurbsBase>(m, "NurbsBase")
+    py::class_<nurbs::NurbsBase2D>(m, "NurbsBase2D")
         .def(py::init<Eigen::VectorXi, Eigen::VectorXi, Eigen::VectorXd, int, int>())
-        .def("computeFirstDerivatives", &nurbs::NurbsBase::computeFirstDerivatives)
-        .def("getInfluenceVector", &nurbs::NurbsBase::getInfluenceVector)
-        .def("getInfluenceMatrix", &nurbs::NurbsBase::getInfluenceMatrix)
-        .def("getDuVector", &nurbs::NurbsBase::getDuVector)
-        .def("getDuMatrix", &nurbs::NurbsBase::getDuMatrix)
-        .def("getDvVector", &nurbs::NurbsBase::getDvVector)
-        .def("getDvMatrix", &nurbs::NurbsBase::getDvMatrix);
+        .def("computeFirstDerivatives", &nurbs::NurbsBase2D::computeFirstDerivatives)
+        .def("getInfluenceVector", &nurbs::NurbsBase2D::getInfluenceVector)
+        .def("getInfluenceMatrix", &nurbs::NurbsBase2D::getInfluenceMatrix)
+        .def("getDuVector", &nurbs::NurbsBase2D::getDuVector)
+        .def("getDuMatrix", &nurbs::NurbsBase2D::getDuMatrix)
+        .def("getDvVector", &nurbs::NurbsBase2D::getDvVector)
+        .def("getDvMatrix", &nurbs::NurbsBase2D::getDvMatrix);
+
+    py::class_<nurbs::NurbsBase1D>(m, "NurbsBase1D")
+        .def(py::init<Eigen::VectorXi, Eigen::VectorXd, int>())
+        .def("computeFirstDerivatives", &nurbs::NurbsBase1D::computeFirstDerivatives)
+        .def("getInfluenceVector", &nurbs::NurbsBase1D::getInfluenceVector)
+        .def("getInfluenceMatrix", &nurbs::NurbsBase1D::getInfluenceMatrix)
+        .def("getDuVector", &nurbs::NurbsBase1D::getDuVector)
+        .def("getDuMatrix", &nurbs::NurbsBase1D::getDuMatrix);
 }
 
 

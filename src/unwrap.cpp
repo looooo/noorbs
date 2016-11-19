@@ -268,6 +268,22 @@ void LscmRelax::relax(double weight)
         K_g_triplets.push_back(trip(this->flat_vertices.cols() * 2 + 2, i * 2 + 1, this->flat_vertices(0, i)));
     }
 
+    // project out the nullspace solution:
+
+    // Eigen::VectorXd nullspace1(this->flat_vertices.cols() * 2);
+    // Eigen::VectorXd nullspace2(this->flat_vertices.cols() * 2);
+    // nullspace1.setZero();
+    // nullspace2.setOnes();
+    // for (long i= 0; i < this->flat_vertices.cols(); i++)
+    // {
+    //     nullspace1(i) = 1;
+    //     nullspace2(i) = 0;
+    // }
+    // nullspace1.normalize();
+    // nullspace2.normalize();
+    // rhs -= nullspace1.dot(rhs) * nullspace1;
+    // rhs -= nullspace2.dot(rhs) * nullspace2;
+
     K_g.setFromTriplets(K_g_triplets.begin(), K_g_triplets.end());
     // rhs +=  K_g * Eigen::VectorXd::Ones(K_g.rows());
     
@@ -276,7 +292,6 @@ void LscmRelax::relax(double weight)
     solver.setTolerance(0.0000001);
     solver.compute(K_g);
     this->sol = solver.solveWithGuess(-rhs, this->sol);
-    std::cout << rhs << std::endl;
     this->set_shift(this->sol.head(this->vertices.cols() * 2) * weight);
     this->set_q_l_m();
 }

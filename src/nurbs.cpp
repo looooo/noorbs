@@ -89,7 +89,7 @@ std::function<double(double)> get_basis_derivative(int order, int degree, int i,
 }
 
 
-NurbsBase::NurbsBase(Eigen::VectorXi u_knots, Eigen::VectorXi v_knots,
+NurbsBase2D::NurbsBase2D(Eigen::VectorXi u_knots, Eigen::VectorXi v_knots,
                      Eigen::VectorXd weights,
                      int degree_u, int degree_v)
 {
@@ -105,7 +105,7 @@ NurbsBase::NurbsBase(Eigen::VectorXi u_knots, Eigen::VectorXi v_knots,
         this->v_functions.push_back(get_basis(degree_v, v_i, v_knots));
 }
 
-Eigen::VectorXd NurbsBase::getInfluenceVector(Eigen::Vector2d u)
+Eigen::VectorXd NurbsBase2D::getInfluenceVector(Eigen::Vector2d u)
 {
     Eigen::VectorXd n_u, n_v;
     double sum_weights = 0;
@@ -143,7 +143,7 @@ void add_triplets(Eigen::VectorXd values, double row, std::vector<trip> &triplet
     }
 }
 
-spMat NurbsBase::getInfluenceMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
+spMat NurbsBase2D::getInfluenceMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
 {
     std::vector<trip> triplets;
     for (int row_index; row_index < U.rows(); row_index++)
@@ -153,7 +153,7 @@ spMat NurbsBase::getInfluenceMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
     return mat;
 }
 
-void NurbsBase::computeFirstDerivatives()
+void NurbsBase2D::computeFirstDerivatives()
 {
     for (int u_i = 0; u_i < u_knots.size(); u_i ++)
         this->Du_functions.push_back(get_basis_derivative(1, this->degree_u, u_i, this->u_knots));
@@ -161,7 +161,7 @@ void NurbsBase::computeFirstDerivatives()
         this->Dv_functions.push_back(get_basis_derivative(1, this->degree_v, v_i, this->v_knots));
 }
 
-void NurbsBase::computeSecondDerivatives()
+void NurbsBase2D::computeSecondDerivatives()
 {
     for (int u_i = 0; u_i < u_knots.size(); u_i ++)
         this->DDu_functions.push_back(get_basis_derivative(2, this->degree_u, u_i, this->u_knots));
@@ -169,7 +169,7 @@ void NurbsBase::computeSecondDerivatives()
         this->DDv_functions.push_back(get_basis_derivative(2, this->degree_v, v_i, this->v_knots));
 }
 
-Eigen::VectorXd NurbsBase::getDuVector(Eigen::Vector2d u)
+Eigen::VectorXd NurbsBase2D::getDuVector(Eigen::Vector2d u)
 {
     Eigen::VectorXd A1, A2;
     double C1, C2;
@@ -211,7 +211,7 @@ Eigen::VectorXd NurbsBase::getDuVector(Eigen::Vector2d u)
     return A1 / A3 - A2 * A5 / A3;
 }
 
-Eigen::VectorXd NurbsBase::getDvVector(Eigen::Vector2d u)
+Eigen::VectorXd NurbsBase2D::getDvVector(Eigen::Vector2d u)
 {
     Eigen::VectorXd A1, A2;
     double C1, C2;
@@ -254,7 +254,7 @@ Eigen::VectorXd NurbsBase::getDvVector(Eigen::Vector2d u)
 }
 
 
-spMat NurbsBase::getDuMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
+spMat NurbsBase2D::getDuMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
 {
     std::vector<trip> triplets;
     for (int row_index; row_index < U.rows(); row_index++)
@@ -264,7 +264,7 @@ spMat NurbsBase::getDuMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
     return mat;
 }
 
-spMat NurbsBase::getDvMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
+spMat NurbsBase2D::getDvMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
 {
     std::vector<trip> triplets;
     for (int row_index; row_index < U.rows(); row_index++)
@@ -273,5 +273,59 @@ spMat NurbsBase::getDvMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
     mat.setFromTriplets(triplets.begin(), triplets.end());
     return mat;
 }
+
+NurbsBase1D::NurbsBase1D(Eigen::VectorXi u_knots, Eigen::VectorXd weights, int degree_u)
+{
+    // assert(weights.size() == u_knots.size() * v_knots.size());
+    this->u_knots = u_knots;
+    this->weights = weights;
+    this->degree_u = degree_u;
+    for (int u_i = 0; u_i < u_knots.size() - degree_u - 1; u_i ++)
+        this->u_functions.push_back(get_basis(degree_u, u_i, u_knots));
+}
+
+Eigen::VectorXd NurbsBase1D::getInfluenceVector(double u)
+{
+    Eigen::VectorXd n_u;
+    double sum_weights = 0;
+    Eigen::VectorXd infl(this->u_functions.size());
+    int u_i = 0;
+
+    n_u.resize(this->u_functions.size());
+
+    for (int i = 0; i < this->u_functions.size(); i ++)
+        n_u[i] = this->u_functions[i](u);
+
+    for (int u_i = 0; u_i < this->u_functions.size(); u_i++)
+    {
+        sum_weights += weights[u_i] * n_u[u_i];
+        infl[u_i] = weights[u_i] * n_u[u_i];
+    }
+    return infl / sum_weights;
+}
+
+spMat NurbsBase1D::getInfluenceMatrix(Eigen::VectorXd u)
+{
+    std::vector<trip> triplets;
+    for (int row_index; row_index < u.size(); row_index++)
+        add_triplets(this->getInfluenceVector(u[row_index]), row_index, triplets);
+    spMat mat(u.size(), this->u_functions.size());
+    mat.setFromTriplets(triplets.begin(), triplets.end());
+    return mat;
+}
+
+void NurbsBase1D::computeFirstDerivatives()
+{
+    for (int u_i = 0; u_i < u_knots.size(); u_i ++)
+        this->Du_functions.push_back(get_basis_derivative(1, this->degree_u, u_i, this->u_knots));
+}
+
+void NurbsBase1D::computeSecondDerivatives()
+{
+    for (int u_i = 0; u_i < u_knots.size(); u_i ++)
+        this->DDu_functions.push_back(get_basis_derivative(2, this->degree_u, u_i, this->u_knots));
+}
+
+
 
 }

@@ -100,7 +100,7 @@ struct NurbsFlat{
         Eigen::VectorXd weights,
         int degree_u=3, int degree_v=3);
 
-    NurbsBase base;
+    NurbsBase2D base;
     std::vector<long> fixed_poles;
     RowMat<double, 3> poles;
     RowMat<double, 2> flat_poles;
