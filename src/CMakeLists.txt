@@ -4,6 +4,7 @@ set(HEADER_FILES ${CMAKE_SOURCE_DIR}/src/headers/unwrap.h
                  ${CMAKE_SOURCE_DIR}/src/headers/nurbs.h )
 
 set(CPP_FILES ${CMAKE_SOURCE_DIR}/src/unwrap.cpp
+			  ${CMAKE_SOURCE_DIR}/src/nurbs_unwrap.cpp
               ${CMAKE_SOURCE_DIR}/src/nurbs.cpp )
 
 add_library(nurbs SHARED ${CPP_FILES} ${HEADER_FILES})

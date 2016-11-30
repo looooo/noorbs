@@ -91,25 +91,25 @@ public:
 
 };
 
-struct NurbsFlat{
+class NurbsFlat{
+private:
+    void set_fixed_pins();
 
-    NurbsFlat(
-        RowMat<double, 3> poles,
-        Eigen::VectorXi u_knots,
-        Eigen::VectorXi v_knots,
-        Eigen::VectorXd weights,
-        int degree_u=3, int degree_v=3);
+
+public:
+
+    NurbsFlat(RowMat<double, 3> poles, 
+              NurbsBase2D nurbs_base, 
+              std::vector<long> fixed_pins={});
 
     NurbsBase2D base;
-    std::vector<long> fixed_poles;
+    std::vector<long> fixed_pins;
     RowMat<double, 3> poles;
     RowMat<double, 2> flat_poles;
 
-    double nue=0.0;
-    double elasticity=1.;
-
     void lscm();
-    void relax(double);
+
+    // void relax(double);
 
 };
 
