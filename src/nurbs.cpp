@@ -49,6 +49,10 @@ std::function<double(double)> get_basis(int degree, int i, Eigen::VectorXi knots
 
 std::function<double(double)> get_basis_derivative(int order, int degree, int i, Eigen::VectorXi knots)
     // Return the derivation of the basis function
+    // order of basis function
+    // degree of basis function
+    // 
+    // knots sequence
 {
     if (order == 1)
     {
@@ -157,7 +161,7 @@ void NurbsBase2D::computeFirstDerivatives()
 {
     for (int u_i = 0; u_i < u_knots.size(); u_i ++)
         this->Du_functions.push_back(get_basis_derivative(1, this->degree_u, u_i, this->u_knots));
-    for (int v_i = 0; v_i < u_knots.size(); v_i ++)
+    for (int v_i = 0; v_i < v_knots.size(); v_i ++)
         this->Dv_functions.push_back(get_basis_derivative(1, this->degree_v, v_i, this->v_knots));
 }
 
@@ -165,7 +169,7 @@ void NurbsBase2D::computeSecondDerivatives()
 {
     for (int u_i = 0; u_i < u_knots.size(); u_i ++)
         this->DDu_functions.push_back(get_basis_derivative(2, this->degree_u, u_i, this->u_knots));
-    for (int v_i = 0; v_i < u_knots.size(); v_i ++)
+    for (int v_i = 0; v_i < v_knots.size(); v_i ++)
         this->DDv_functions.push_back(get_basis_derivative(2, this->degree_v, v_i, this->v_knots));
 }
 
@@ -196,7 +200,6 @@ Eigen::VectorXd NurbsBase2D::getDuVector(Eigen::Vector2d u)
 
     for (int u_i=0; u_i < this->u_functions.size(); u_i++)
     {
-        v_i = 0;
         for (int v_i=0; v_i < this->v_functions.size(); v_i++)
         {
             C1 = weights[i] * Dn_u[u_i] * n_v[v_i];
@@ -208,7 +211,7 @@ Eigen::VectorXd NurbsBase2D::getDuVector(Eigen::Vector2d u)
             i ++;
         }
     }
-    return A1 / A3 - A2 * A5 / A3;
+    return (A1 - A2 * A5) / A3;
 }
 
 Eigen::VectorXd NurbsBase2D::getDvVector(Eigen::Vector2d u)
@@ -232,25 +235,24 @@ Eigen::VectorXd NurbsBase2D::getDvVector(Eigen::Vector2d u)
     }
     for (int v_i=0; v_i < this->v_functions.size(); v_i++)
     {
-        n_v[v_i] = this->v_functions[v_i](u.x());
+        n_v[v_i] = this->v_functions[v_i](u.y());
         Dn_v[v_i] = this->Dv_functions[v_i](u.y());
     }
 
-    for (int u_i=0; u_i < this->u_functions.size(); u_i++)
+    for (int u_i=0; u_i < this->v_functions.size(); u_i++)
     {
-        v_i = 0;
-        for (int v_i=0; v_i < this->v_functions.size(); v_i++)
+        for (int v_i=0; v_i < this->u_functions.size(); v_i++)
         {
             C1 = weights[i] * Dn_v[v_i] * n_u[u_i];
             C2 = weights[i] * n_v[v_i] * n_u[u_i];
-            A1[i] = C1; A2[i] = C1;
-            A3 += C2; A5 += C1;
+            A1[i] = C1; 
+            A2[i] = C1;
+            A3 += C2; 
+            A5 += C1;
             i ++;
-            v_i ++;
         }
-        u_i ++;
     }
-    return A1 / A3 - A2 * A5 / A3;
+    return (A1 - A2 * A5) / A3;
 }
 
 
@@ -324,6 +326,16 @@ void NurbsBase1D::computeSecondDerivatives()
 {
     for (int u_i = 0; u_i < u_knots.size(); u_i ++)
         this->DDu_functions.push_back(get_basis_derivative(2, this->degree_u, u_i, this->u_knots));
+}
+
+spMat NurbsBase1D::getDuMatrix(Eigen::VectorXd u)
+{
+    
+}
+
+Eigen::VectorXd NurbsBase1D::getDuVector(double u)
+{
+
 }
 
 

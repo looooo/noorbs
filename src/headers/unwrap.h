@@ -99,10 +99,10 @@ private:
 public:
 
     NurbsFlat(RowMat<double, 3> poles, 
-              NurbsBase2D nurbs_base, 
+              NurbsBase2D *nurbs_base, 
               std::vector<long> fixed_pins={});
 
-    NurbsBase2D base;
+    NurbsBase2D *base;
     std::vector<long> fixed_pins;
     RowMat<double, 3> poles;
     RowMat<double, 2> flat_poles;

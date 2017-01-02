@@ -4,44 +4,25 @@
 
 namespace nurbs{
 
-NurbsFlat::NurbsFlat(RowMat<double, 3> poles, 
-					 NurbsBase2D nurbs_base, 
-        			 std::vector<long> fixed_pins={})
+    NurbsFlat::NurbsFlat(RowMat<double, 3> poles, 
+              NurbsBase2D* nurbs_base, 
+              std::vector<long> fixed_pins)
 {
-	this->poles = poles;
-	this->fixed_pins = fixed_pins;
-	this->base = nurbs_base;
-	// we have to make a map from u_i, v_i to matrix entry and the other direction
-	// find the straight direction!
+    // for a first implementation fix the last two poles
 
-    this->set_fixed_pins();
+    // 1: define the collocation points in u-v
 
-    
-    int fixed_count = 0;
-    for (long i=0; i < this->vertices.cols(); i++)
-    {   
-        if (fixed_count < this->fixed_pins.size())
-        {
-            if (i == this->fixed_pins[fixed_count])
-                fixed_count ++;
-            else
-                this->old_order.push_back(i);
-        }
-        else
-            this->old_order.push_back(i);
-    }
+    // 2: for every collocation point:
+            // 1: get the derivate vector of all controllpoints
+            // 2: construct the local coordinatensystem H
+            // 3: compute the jacobimatrix
+            // 4: fill matrix qith equation (use 3 + 1)
 
-    for (auto fixed_index: this->fixed_pins)
-        this->old_order.push_back(fixed_index);
+    // 3: use last two collumns to compute rhs knowen values are: (0, 0, 1, 0)
 
-    // get the reversed map:
-    this->new_order.resize(this->old_order.size());
-    long j = 0;
-    for (auto index: this->old_order)
-    {
-        this->new_order[index] = j;
-        j++;
-    }
+    // 4: solve system and set flat vertices
+
+
 }
 
 void NurbsFlat::lscm()
