@@ -14,13 +14,13 @@ typedef Eigen::SparseMatrix<double> spMat;
 struct NurbsBase2D
 {
     //
-    NurbsBase2D(Eigen::VectorXi u_knots, Eigen::VectorXi v_knots,
+    NurbsBase2D(Eigen::VectorXd u_knots, Eigen::VectorXd v_knots,
               Eigen::VectorXd weights,
               int degree_u=3, int degree_v=3);
     int degree_u = degree_u;
     int degree_v = degree_v;
-    Eigen::VectorXi u_knots;
-    Eigen::VectorXi v_knots;
+    Eigen::VectorXd u_knots;
+    Eigen::VectorXd v_knots;
     Eigen::VectorXd weights;
 
     std::vector<std::function<double(double)>> u_functions;
@@ -47,9 +47,9 @@ struct NurbsBase2D
 
 struct NurbsBase1D
 {
-    NurbsBase1D(Eigen::VectorXi u_knots, Eigen::VectorXd weights, int degree_u=3);
+    NurbsBase1D(Eigen::VectorXd u_knots, Eigen::VectorXd weights, int degree_u=3);
     int degree_u = degree_u;
-    Eigen::VectorXi u_knots;
+    Eigen::VectorXd u_knots;
     Eigen::VectorXd weights;
     std::vector<std::function<double(double)>> u_functions;
     std::vector<std::function<double(double)>> Du_functions;

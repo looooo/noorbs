@@ -30,7 +30,7 @@ void init_nurbs(py::module &m){
         .def_property_readonly("flat_vertices_3D", &nurbs::LscmRelax::get_flat_vertices_3D);
 
     py::class_<nurbs::NurbsBase2D>(m, "NurbsBase2D")
-        .def(py::init<Eigen::VectorXi, Eigen::VectorXi, Eigen::VectorXd, int, int>())
+        .def(py::init<Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, int, int>())
         .def("computeFirstDerivatives", &nurbs::NurbsBase2D::computeFirstDerivatives)
         .def("getInfluenceVector", &nurbs::NurbsBase2D::getInfluenceVector)
         .def("getInfluenceMatrix", &nurbs::NurbsBase2D::getInfluenceMatrix)
@@ -40,7 +40,7 @@ void init_nurbs(py::module &m){
         .def("getDvMatrix", &nurbs::NurbsBase2D::getDvMatrix);
 
     py::class_<nurbs::NurbsBase1D>(m, "NurbsBase1D")
-        .def(py::init<Eigen::VectorXi, Eigen::VectorXd, int>())
+        .def(py::init<Eigen::VectorXd, Eigen::VectorXd, int>())
         .def("computeFirstDerivatives", &nurbs::NurbsBase1D::computeFirstDerivatives)
         .def("getInfluenceVector", &nurbs::NurbsBase1D::getInfluenceVector)
         .def("getInfluenceMatrix", &nurbs::NurbsBase1D::getInfluenceMatrix)

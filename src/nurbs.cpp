@@ -1,11 +1,19 @@
 #include "nurbs.h"
 #include <iostream>
+#include "math.h"
 
 namespace nurbs{
 
+double divide(double a, double b)
+{
+    if (fabs(b) < 10e-14)
+        return 0;
+    else
+        return a / b;
+}
 
 // DE BOOR ALGORITHM FROM OPENGLIDER
-std::function<double(double)> get_basis(int degree, int i, Eigen::VectorXi knots)
+std::function<double(double)> get_basis(int degree, int i, Eigen::VectorXd knots)
     // Return a basis_function for the given degree """
 {
     if (degree == 0)
@@ -13,9 +21,11 @@ std::function<double(double)> get_basis(int degree, int i, Eigen::VectorXi knots
         return [degree, i, knots](double t)
         {
             // The basis function for degree = 0 as per eq. 7
-            int t_this = knots[i];
-            int t_next = knots[i+1];
-            return (t_next >= t > t_this);
+            double t_this = knots[i];
+            double t_next = knots[i+1];
+            if (t == knots[0])
+                return (t_next >= t and t >= t_this);
+            return (t_next >= t and t > t_this);
         };
     }
     else
@@ -23,31 +33,26 @@ std::function<double(double)> get_basis(int degree, int i, Eigen::VectorXi knots
         return [degree, i, knots](double t)
         {
             // The basis function for degree > 0 as per eq. 8
-            if (i == 0 and t == 0)
-                return 1.;
             double out = 0.;
-            int t_this = knots[i];
-            int t_next = knots[i + 1];
-            int t_precog  = knots[i + degree];
-            int t_horizon = knots[i + degree + 1];
+            double t_this = knots[i];
+            double t_next = knots[i + 1];
+            double t_precog  = knots[i + degree];
+            double t_horizon = knots[i + degree + 1];
+            if (t_this == t_horizon)
+                return 0.;
 
-            double top = (t - t_this);
             double bottom = (t_precog - t_this);
+            out = divide(t - t_this, bottom) * get_basis(degree - 1, i, knots)(t);
 
-            if (bottom != 0)
-                out = top / bottom * get_basis(degree - 1, i, knots)(t);
-
-            top = (t_horizon - t);
             bottom = (t_horizon - t_next);
-            if (bottom != 0)
-                out += top / bottom * get_basis(degree-1, i + 1, knots)(t);
+            out += divide(t_horizon - t, bottom) * get_basis(degree - 1, i + 1, knots)(t);
             return out;
         };
     }
 };
 
 
-std::function<double(double)> get_basis_derivative(int order, int degree, int i, Eigen::VectorXi knots)
+std::function<double(double)> get_basis_derivative(int order, int degree, int i, Eigen::VectorXd knots)
     // Return the derivation of the basis function
     // order of basis function
     // degree of basis function
@@ -93,7 +98,7 @@ std::function<double(double)> get_basis_derivative(int order, int degree, int i,
 }
 
 
-NurbsBase2D::NurbsBase2D(Eigen::VectorXi u_knots, Eigen::VectorXi v_knots,
+NurbsBase2D::NurbsBase2D(Eigen::VectorXd u_knots, Eigen::VectorXd v_knots,
                      Eigen::VectorXd weights,
                      int degree_u, int degree_v)
 {
@@ -159,17 +164,17 @@ spMat NurbsBase2D::getInfluenceMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U
 
 void NurbsBase2D::computeFirstDerivatives()
 {
-    for (int u_i = 0; u_i < u_knots.size(); u_i ++)
+    for (int u_i = 0; u_i < u_functions.size(); u_i ++)
         this->Du_functions.push_back(get_basis_derivative(1, this->degree_u, u_i, this->u_knots));
-    for (int v_i = 0; v_i < v_knots.size(); v_i ++)
+    for (int v_i = 0; v_i < v_functions.size(); v_i ++)
         this->Dv_functions.push_back(get_basis_derivative(1, this->degree_v, v_i, this->v_knots));
 }
 
 void NurbsBase2D::computeSecondDerivatives()
 {
-    for (int u_i = 0; u_i < u_knots.size(); u_i ++)
+    for (int u_i = 0; u_i < u_functions.size(); u_i ++)
         this->DDu_functions.push_back(get_basis_derivative(2, this->degree_u, u_i, this->u_knots));
-    for (int v_i = 0; v_i < v_knots.size(); v_i ++)
+    for (int v_i = 0; v_i < v_functions.size(); v_i ++)
         this->DDv_functions.push_back(get_basis_derivative(2, this->degree_v, v_i, this->v_knots));
 }
 
@@ -188,6 +193,8 @@ Eigen::VectorXd NurbsBase2D::getDuVector(Eigen::Vector2d u)
     n_u.resize(this->u_functions.size());
     Dn_u.resize(this->v_functions.size());
     n_v.resize(this->v_functions.size());
+    std::cout << "u_functions: " << u_functions.size();
+    std::cout << "Du_functions: " << Du_functions.size();
     for (int u_i=0; u_i < this->u_functions.size(); u_i++)
     {
         n_u[u_i] = this->u_functions[u_i](u.x());
@@ -196,6 +203,7 @@ Eigen::VectorXd NurbsBase2D::getDuVector(Eigen::Vector2d u)
     for (int v_i=0; v_i < this->v_functions.size(); v_i++)
     {
         n_v[v_i] = this->v_functions[v_i](u.y());
+        std::cout << v_i << std::endl;
     }
 
     for (int u_i=0; u_i < this->u_functions.size(); u_i++)
@@ -276,9 +284,8 @@ spMat NurbsBase2D::getDvMatrix(Eigen::Matrix<double, Eigen::Dynamic, 2> U)
     return mat;
 }
 
-NurbsBase1D::NurbsBase1D(Eigen::VectorXi u_knots, Eigen::VectorXd weights, int degree_u)
+NurbsBase1D::NurbsBase1D(Eigen::VectorXd u_knots, Eigen::VectorXd weights, int degree_u)
 {
-    // assert(weights.size() == u_knots.size() * v_knots.size());
     this->u_knots = u_knots;
     this->weights = weights;
     this->degree_u = degree_u;
@@ -318,26 +325,37 @@ spMat NurbsBase1D::getInfluenceMatrix(Eigen::VectorXd u)
 
 void NurbsBase1D::computeFirstDerivatives()
 {
-    for (int u_i = 0; u_i < u_knots.size(); u_i ++)
+    for (int u_i = 0; u_i < u_functions.size(); u_i ++)
         this->Du_functions.push_back(get_basis_derivative(1, this->degree_u, u_i, this->u_knots));
 }
 
 void NurbsBase1D::computeSecondDerivatives()
 {
-    for (int u_i = 0; u_i < u_knots.size(); u_i ++)
+    for (int u_i = 0; u_i < u_functions.size(); u_i ++)
         this->DDu_functions.push_back(get_basis_derivative(2, this->degree_u, u_i, this->u_knots));
 }
 
-spMat NurbsBase1D::getDuMatrix(Eigen::VectorXd u)
-{
-    
-}
 
 Eigen::VectorXd NurbsBase1D::getDuVector(double u)
 {
-
+    Eigen::VectorXd Dn_u;
+    Dn_u.resize(this->Du_functions.size());
+    for (int u_i=0; u_i < this->Du_functions.size(); u_i++)
+    {
+        Dn_u[u_i] = Du_functions[u_i](u);
+    }
+    return Dn_u;
 }
 
 
+spMat NurbsBase1D::getDuMatrix(Eigen::VectorXd U)
+{
+    std::vector<trip> triplets;
+    for (int row_index; row_index < U.size(); row_index++)
+        add_triplets(this->getDuVector(U[row_index]), row_index, triplets);
+    spMat mat(U.rows(), this->Du_functions.size());
+    mat.setFromTriplets(triplets.begin(), triplets.end());
+    return mat;
+}
 
 }
