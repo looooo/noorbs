@@ -1,14 +1,14 @@
 import numpy as np
 import nurbs
 
-u_knots = np.array([ 0.,0., 0.5, 1, 1], float)
-v_knots = np.array([ 0., 0., 1., 1.], float)
-u_degreee = 1
-v_degree = 1
-weights = np.array([1., 1., 1., 1., 1, 1], float)
+u_knots = np.array([ 0, 0, 0, 1, 1, 1], float)
+v_knots = np.array([ 0, 0, 0, 1, 1, 1], float)
+u_degreee = 2
+v_degree = 2
+weights = np.array([1., 1., 1., 1., 1, 1, 1, 1, 1], float)
 
-u_dess = 5
-v_dess = 5
+u_dess = 20
+v_dess = 20
 
 a = nurbs.NurbsBase2D(u_knots, v_knots, weights, u_degreee, v_degree)
 a.computeFirstDerivatives()
@@ -17,28 +17,30 @@ v = np.linspace(v_knots[0], v_knots[-1], v_dess)
 
 uv = [[i, j] for i in u for j in v]
 
-x_points = np.array([0, 0, 1, 1, 2, 2])
-y_points = np.array([0, 1, 0, 1, 0, 1])
-z_points = np.array([1, 0, 0, 0, 0, 1])
+x_points = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2])
+y_points = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2])
+z_points = np.array([0, 0, 0, 0, 10, 0, 0, 0, 0])
 pos = a.getInfluenceMatrix(np.array(uv)) * np.array([x_points, y_points, z_points]).T
-a.getDuVector(np.array([0., 0.]))
-# du = a.getDuMatrix(np.array(uv)) * z_points
-# dv = a.getDvMatrix(np.array(uv)) * z_points
 
-# colors = np.array([np.zeros(len(du)), np.zeros(len(du)), (du - min(du))/ (max(du) - min(du))]).T.tolist()
-# print(colors)
+a.getDuVector(np.array([0, 0]))
+du = a.getDuMatrix(np.array(uv)) * z_points
+dv = a.getDvMatrix(np.array(uv)) * z_points
+du = du ** 2 + dv ** 2
+
+colors = (du - min(du))/ (max(du) - min(du))
+colors = np.array([colors, np.zeros(len(colors)), np.zeros(len(colors))]).T.tolist()
 from pivy import coin
-# from pivy_primitives_new_new import Marker
+# # from pivy_primitives_new_new import Marker
 
 result = coin.SoSeparator()
 
-# myBinding = coin.SoMaterialBinding()
-# myBinding.value = coin.SoMaterialBinding.PER_VERTEX_INDEXED
-# result.addChild(myBinding)
+myBinding = coin.SoMaterialBinding()
+myBinding.value = coin.SoMaterialBinding.PER_VERTEX_INDEXED
+result.addChild(myBinding)
 
-# myMaterial = coin.SoMaterial()
-# myMaterial.diffuseColor.setValues(0, len(colors), colors)
-# result += myMaterial
+myMaterial = coin.SoMaterial()
+myMaterial.diffuseColor.setValues(0, len(colors), colors)
+result += myMaterial
 
 # Define coordinates for vertices
 myCoords = coin.SoCoordinate3()

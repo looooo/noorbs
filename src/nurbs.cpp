@@ -64,12 +64,12 @@ std::function<double(double)> get_basis_derivative(int order, int degree, int i,
         return [degree, i, knots](double t)
         {
             double out = 0;
-            if (not knots[i + degree] - knots[i] == 0)
+            if (not (knots[i + degree] - knots[i] == 0))
             {
                 out +=  get_basis(degree - 1, i, knots)(t) *
                         degree / (knots[i + degree] - knots[i]);
             }
-            if (not knots[i + degree + 1] - knots[i + 1] == 0)
+            if (not (knots[i + degree + 1] - knots[i + 1] == 0))
             {
                 out -=  get_basis(degree - 1, i + 1, knots)(t) *
                         degree / (knots[i + degree + 1] - knots[i + 1]);
@@ -82,12 +82,12 @@ std::function<double(double)> get_basis_derivative(int order, int degree, int i,
         return [degree, i, knots, order](double t)
         {
             double out = 0;
-            if (not knots[i + degree] - knots[i] == 0)
+            if (not (knots[i + degree] - knots[i] == 0))
             {
                 out +=  get_basis_derivative(order - 1, degree - 1, i, knots)(t) *
                         degree / (knots[i + degree] - knots[i]);
             }
-            if (not knots[i + degree + 1] - knots[i + 1] == 0)
+            if (not (knots[i + degree + 1] - knots[i + 1] == 0))
             {
                 out -=  get_basis_derivative(order - 1, degree - 1, i + 1, knots)(t) *
                         degree / (knots[i + degree + 1] - knots[i + 1]);
@@ -191,19 +191,19 @@ Eigen::VectorXd NurbsBase2D::getDuVector(Eigen::Vector2d u)
     int v_i = 0;
     Eigen::VectorXd n_u, n_v, Dn_u;
     n_u.resize(this->u_functions.size());
-    Dn_u.resize(this->v_functions.size());
+    Dn_u.resize(this->u_functions.size());
     n_v.resize(this->v_functions.size());
-    std::cout << "u_functions: " << u_functions.size();
-    std::cout << "Du_functions: " << Du_functions.size();
     for (int u_i=0; u_i < this->u_functions.size(); u_i++)
     {
+        // std::cout << "u_i: " << u_i << " , n_u: " << n_u.size() 
+        //           << " , Dn_u: " << Dn_u.size() << std::endl;
         n_u[u_i] = this->u_functions[u_i](u.x());
         Dn_u[u_i] = this->Du_functions[u_i](u.x());
     }
     for (int v_i=0; v_i < this->v_functions.size(); v_i++)
     {
         n_v[v_i] = this->v_functions[v_i](u.y());
-        std::cout << v_i << std::endl;
+        // std::cout << v_i << std::endl;
     }
 
     for (int u_i=0; u_i < this->u_functions.size(); u_i++)
@@ -247,9 +247,9 @@ Eigen::VectorXd NurbsBase2D::getDvVector(Eigen::Vector2d u)
         Dn_v[v_i] = this->Dv_functions[v_i](u.y());
     }
 
-    for (int u_i=0; u_i < this->v_functions.size(); u_i++)
+    for (int u_i=0; u_i < this->u_functions.size(); u_i++)
     {
-        for (int v_i=0; v_i < this->u_functions.size(); v_i++)
+        for (int v_i=0; v_i < this->v_functions.size(); v_i++)
         {
             C1 = weights[i] * Dn_v[v_i] * n_u[u_i];
             C2 = weights[i] * n_v[v_i] * n_u[u_i];
@@ -339,7 +339,7 @@ void NurbsBase1D::computeSecondDerivatives()
 Eigen::VectorXd NurbsBase1D::getDuVector(double u)
 {
     Eigen::VectorXd Dn_u;
-    Dn_u.resize(this->Du_functions.size());
+    Dn_u.resize(this->u_functions.size());
     for (int u_i=0; u_i < this->Du_functions.size(); u_i++)
     {
         Dn_u[u_i] = Du_functions[u_i](u);
@@ -353,7 +353,7 @@ spMat NurbsBase1D::getDuMatrix(Eigen::VectorXd U)
     std::vector<trip> triplets;
     for (int row_index; row_index < U.size(); row_index++)
         add_triplets(this->getDuVector(U[row_index]), row_index, triplets);
-    spMat mat(U.rows(), this->Du_functions.size());
+    spMat mat(U.size(), this->u_functions.size());
     mat.setFromTriplets(triplets.begin(), triplets.end());
     return mat;
 }
