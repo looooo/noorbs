@@ -12,13 +12,9 @@ OPTION(BUILD_TESTS "test require vtk" ON)
 OPTION(BUILD_PYTHON_BINDINGS "create python bindings" ON)
 OPTION(BUILD_JSON "json in out" ON)
 
-# DEPENDENCIES
-FIND_PACKAGE(OpenMP)
-
 ## EIGEN
 find_package(Eigen3)
 MESSAGE(${EIGEN3_VERSION})
-find_package(OpenMP)
 INCLUDE_DIRECTORIES( ${EIGEN3_INCLUDE_DIR})     # eigen3
 
 IF(OPENMP_FOUND)

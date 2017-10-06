@@ -12,7 +12,7 @@ INCLUDE_DIRECTORIES( ${PYTHON_INCLUDE_DIRS})    # python.h, pybind11
 INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/src/headers)
 
 add_library(_nurbs SHARED _nurbs.cpp)
-target_link_libraries(_nurbs nurbs vtkWriter)
+target_link_libraries(_nurbs nurbs)
 set_target_properties(_nurbs PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/nurbs)
 # !!!!!!!!!remember
 set_target_properties(_nurbs PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)

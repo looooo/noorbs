@@ -61,7 +61,7 @@ std::function<double(double)> get_basis_derivative(int order, int degree, int i,
 {
     if (order == 1)
     {
-        return [degree, i, knots](double t)
+        return [degree, i, knots, order](double t)
         {
             double out = 0;
             if (not (knots[i + degree] - knots[i] == 0))
@@ -213,13 +213,13 @@ Eigen::VectorXd NurbsBase2D::getDuVector(Eigen::Vector2d u)
             C1 = weights[i] * Dn_u[u_i] * n_v[v_i];
             C2 = weights[i] * n_u[u_i] * n_v[v_i];
             A1[i] = C1;
-            A2[i] = C1;
+            A2[i] = C2;
             A3 += C2;
             A5 += C1;
             i ++;
         }
     }
-    return (A1 - A2 * A5) / A3;
+    return (A1 * A3 - A2 * A5) / A3 / A3;
 }
 
 Eigen::VectorXd NurbsBase2D::getDvVector(Eigen::Vector2d u)
@@ -254,13 +254,13 @@ Eigen::VectorXd NurbsBase2D::getDvVector(Eigen::Vector2d u)
             C1 = weights[i] * Dn_v[v_i] * n_u[u_i];
             C2 = weights[i] * n_v[v_i] * n_u[u_i];
             A1[i] = C1; 
-            A2[i] = C1;
+            A2[i] = C2;
             A3 += C2; 
             A5 += C1;
             i ++;
         }
     }
-    return (A1 - A2 * A5) / A3;
+    return (A1 * A3 - A2 * A5) / A3 / A3;
 }
 
 
@@ -338,13 +338,36 @@ void NurbsBase1D::computeSecondDerivatives()
 
 Eigen::VectorXd NurbsBase1D::getDuVector(double u)
 {
-    Eigen::VectorXd Dn_u;
+    Eigen::VectorXd A1, A2;
+    double C1, C2;
+    double C3 = 0;
+    double C4 = 0;
+    int i = 0;
+    int u_i = 0;
+    A1.resize(this->u_functions.size());
+    A2.resize(this->u_functions.size());
+    Eigen::VectorXd n_u, Dn_u;
+    n_u.resize(this->u_functions.size());
     Dn_u.resize(this->u_functions.size());
+
+    for (int u_i=0; u_i < this->u_functions.size(); u_i++)
+    {
+        n_u[u_i] = this->u_functions[u_i](u);
+        Dn_u[u_i] = this->Du_functions[u_i](u);
+    }
+
     for (int u_i=0; u_i < this->Du_functions.size(); u_i++)
     {
-        Dn_u[u_i] = Du_functions[u_i](u);
+        C1 = weights[i] * Dn_u[u_i];
+        C2 = weights[i] * n_u[u_i];
+        C3 += C1; 
+        C4 += C2;
+
+        A1[i] = C1; 
+        A2[i] = C2;
+        i ++;
     }
-    return Dn_u;
+    return (A1 * C4 - A2 * C3) / C4 / C4 ;
 }
 
 
