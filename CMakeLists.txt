@@ -2,15 +2,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 ADD_DEFINITIONS(-std=c++11)
 
 PROJECT(parafem)
-
-
-set(CMAKE_CXX_FLAGS "-O4")
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # OPTIONS
-OPTION(BUILD_TESTS "test require vtk" ON)
 OPTION(BUILD_PYTHON_BINDINGS "create python bindings" ON)
-OPTION(BUILD_JSON "json in out" ON)
 
 ## EIGEN
 find_package(Eigen3)
