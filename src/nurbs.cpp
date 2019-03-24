@@ -199,6 +199,8 @@ Eigen::VectorXd NurbsBase3D::getDuVector(Eigen::Vector3d u)
     double C1, C2;
     A1.resize(this->u_functions.size() * this->v_functions.size() * this->w_functions.size());
     A2.resize(this->u_functions.size() * this->v_functions.size() * this->w_functions.size());
+    A1.setZero();
+    A2.setZero();
     double A3 = 0;
     double A5 = 0;
     int i = 0;
@@ -248,16 +250,16 @@ Eigen::VectorXd NurbsBase3D::getDvVector(Eigen::Vector3d u)
     double C1, C2;
     A1.resize(this->u_functions.size() * this->v_functions.size() * this->w_functions.size());
     A2.resize(this->u_functions.size() * this->v_functions.size() * this->w_functions.size());
+    A1.setZero();
+    A2.setZero();
     double A3 = 0;
     double A5 = 0;
     int i = 0;
-    int u_i = 0;
-    int v_i = 0;
     Eigen::VectorXd n_u, n_v, n_w, Dn_v;
     n_u.resize(this->u_functions.size());
     n_v.resize(this->v_functions.size());
     n_w.resize(this->w_functions.size());
-    Dn_v.resize(this->v_functions.size());
+    Dn_v.resize(this->u_functions.size());
     for (int u_i=0; u_i < this->u_functions.size(); u_i++)
     {
         n_u[u_i] = this->u_functions[u_i](u.x());
@@ -265,7 +267,7 @@ Eigen::VectorXd NurbsBase3D::getDvVector(Eigen::Vector3d u)
     for (int v_i=0; v_i < this->v_functions.size(); v_i++)
     {
         n_v[v_i] = this->v_functions[v_i](u.y());
-        Dn_v[v_i] = this->Dv_functions[v_i](u.z());
+        Dn_v[v_i] = this->Dv_functions[v_i](u.y());
     }
     for (int w_i=0; w_i < this->w_functions.size(); w_i++)
     {
@@ -278,7 +280,7 @@ Eigen::VectorXd NurbsBase3D::getDvVector(Eigen::Vector3d u)
         {
             for (int w_i=0; w_i < this->w_functions.size(); w_i++)
             {
-                C1 = weights[i] * n_u[v_i] * Dn_v[u_i] * n_w[w_i];
+                C1 = weights[i] * n_u[u_i] * Dn_v[v_i] * n_w[w_i];
                 C2 = weights[i] * n_u[u_i] * n_v[v_i] * n_w[w_i];
                 A1[i] = C1;
                 A2[i] = C2;
@@ -297,6 +299,8 @@ Eigen::VectorXd NurbsBase3D::getDwVector(Eigen::Vector3d u)
     double C1, C2;
     A1.resize(this->u_functions.size() * this->v_functions.size() * this->w_functions.size());
     A2.resize(this->u_functions.size() * this->v_functions.size() * this->w_functions.size());
+    A1.setZero();
+    A2.setZero();
     double A3 = 0;
     double A5 = 0;
     int i = 0;
