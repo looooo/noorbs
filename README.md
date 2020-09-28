@@ -12,11 +12,13 @@ import numpy as np
 import nurbs
 
 # setup the basic input for the basis
-u_knots = nurbs.create_knots_vector(u_min=0, u_max=1, degree=2, num_poles=4)
-v_knots = nurbs.create_knots_vector(u_min=0, u_max=1, degree=3, num_poles=4)
-u_degreee = 1
-v_degree = 1
-weights = np.array([1.] * 8)
+u_degreee = 2
+v_degree = 3
+
+u_knots = nurbs.create_knots_vector(u_min=0, u_max=1, degree=u_degreee, num_poles=4)
+v_knots = nurbs.create_knots_vector(u_min=0, u_max=1, degree=v_degree, num_poles=4)
+
+weights = np.ones([16])
 
 # create the nurbs-object
 a = nurbs.NurbsBase2D(u_knots, v_knots, weights, u_degreee, v_degree)
@@ -31,14 +33,15 @@ uv = np.array([[i, j] for i in u for j in v])
 
 # compute influence-matrix and derivatives at given points
 mat = a.getInfluenceMatrix(uv)
-dv = a.getDVMatrix(uv)
-du = a.getDUMatrix(uv)
+dv = a.getDvMatrix(uv)
+du = a.getDuMatrix(uv)
 
 # now we can easily compute the interpolation-data by matrix-products
-data = uv[0] ** 2 + uv[1] ** 2 
-int_data = mat @ data
-int_data_du = du @ data
-int_data_dv = dv @ data
+data = uv.T[0] ** 2 + uv.T[1] ** 2
+poles = np.linalg.lstsq(mat.toarray(), data)[0]  # approximation of data
+int_data = mat @ poles
+int_data_du = du @ poles
+int_data_dv = dv @ poles
 ```
 
 
