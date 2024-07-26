@@ -1,24 +1,28 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-ADD_DEFINITIONS(-std=c++11)
+cmake_minimum_required(VERSION 3.11)
+add_definitions(-std=c++11)
 
-PROJECT(noorbs)
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+project(noorbs)
+set(CMAKE_MODULE_PATH ${Python_INCLUDE_DIRS}/cmake)
 
-# OPTIONS
-OPTION(BUILD_PYTHON_BINDINGS "create python bindings" ON)
+# options
+option(BUILD_PYTHON_BINDINGS "create python bindings" ON)
 
-## EIGEN
+## eigen
 find_package(Eigen3)
-MESSAGE(${EIGEN3_VERSION})
-INCLUDE_DIRECTORIES( ${EIGEN3_INCLUDE_DIR})     # eigen3
+include_directories(${EIGEN3_INCLUDE_DIR})
 
-IF(OPENMP_FOUND)
+if(BUILD_PYTHON_BINDINGS)
+    find_package(Python COMPONENTS Interpreter Development)
+    find_package(pybind11 CONFIG)
+endif()
+
+if(OPENMP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${OpenMP_C_FLAGS}")
-ENDIF()
+endif()
 
-ADD_SUBDIRECTORY("src/")
+add_subdirectory("src/")
 
-IF (BUILD_TESTS)
-    ADD_SUBDIRECTORY("tests/")
-ENDIF(BUILD_TESTS)
+if (BUILD_TESTS)
+    add_subdirectory("tests/")
+endif(BUILD_TESTS)

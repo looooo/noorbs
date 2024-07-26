@@ -6,6 +6,6 @@ add_library(nurbs SHARED ${CPP_FILES} ${HEADER_FILES})
 
 install(TARGETS nurbs DESTINATION lib)
 
-IF (BUILD_PYTHON_BINDINGS)
-    ADD_SUBDIRECTORY("python/")
-ENDIF(BUILD_PYTHON_BINDINGS)
+if(BUILD_PYTHON_BINDINGS)
+    add_subdirectory("python/")
+endif(BUILD_PYTHON_BINDINGS)
